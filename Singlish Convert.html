@@ -1,0 +1,306 @@
+
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Singlish Auto Converter</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px;
+  display: grid;
+  place-items: center;
+  font-family: Arial, sans-serif;
+  color: white;
+  background:
+    radial-gradient(circle at 10% 10%, #35598b, transparent 45%),
+    radial-gradient(circle at 90% 90%, #64438d, transparent 45%),
+    #080c18;
+}
+
+.app {
+  width: 100%;
+  max-width: 900px;
+  padding: 26px;
+  border: 1px solid #ffffff30;
+  border-radius: 28px;
+  background: #ffffff10;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 25px 80px #0008;
+}
+
+h1 {
+  text-align: center;
+  margin: 0 0 8px;
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.subtitle {
+  text-align: center;
+  color: #c2cce3;
+  margin: 0 0 25px;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+label {
+  display: block;
+  margin: 0 0 10px;
+  font-weight: bold;
+}
+
+textarea {
+  width: 100%;
+  height: 230px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid #ffffff30;
+  background: #070c1bcc;
+  color: white;
+  outline: none;
+  resize: vertical;
+  font: 17px/1.8 Arial, sans-serif;
+}
+
+textarea:focus {
+  border-color: #8de5ff;
+  box-shadow: 0 0 15px #8de5ff25;
+}
+
+#output {
+  background: #ffffff0b;
+  font-family: Arial, "Noto Sans Sinhala", sans-serif;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+button {
+  padding: 12px 17px;
+  border-radius: 13px;
+  border: 1px solid #ffffff30;
+  background: #ffffff12;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #ffffff25;
+}
+
+.primary {
+  border: none;
+  color: #10182b;
+  background: linear-gradient(135deg, #8ceaff, #c6adff);
+}
+
+#status {
+  min-height: 20px;
+  margin-top: 15px;
+  color: #c4d4f5;
+  font-size: 13px;
+}
+
+.note {
+  color: #aebbd7;
+  font-size: 13px;
+  line-height: 1.7;
+  margin-top: 20px;
+}
+
+@media(max-width: 650px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+
+  textarea {
+    height: 160px;
+  }
+
+  .app {
+    padding: 18px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+  <h1>Singlish → සිංහල</h1>
+
+  <p class="subtitle">
+    Fast Automatic Sinhala Typing
+  </p>
+
+  <div class="panels">
+
+    <section>
+      <label for="input">Singlish ටයිප් කරන්න</label>
+
+      <textarea id="input"
+        placeholder="mama gedara yanawa"></textarea>
+    </section>
+
+    <section>
+      <label for="output">සිංහල ප්‍රතිඵලය</label>
+
+      <textarea id="output"
+        placeholder="සිංහල මෙතැන පෙන්වයි..."></textarea>
+    </section>
+
+  </div>
+
+  <div class="buttons">
+    <button class="primary" id="convertBtn">
+      Convert Now
+    </button>
+
+    <button id="copyBtn">
+      Copy Sinhala
+    </button>
+
+    <button id="clearBtn">
+      Clear All
+    </button>
+  </div>
+
+  <div id="status">
+    Internet සම්බන්ධතාවයක් අවශ්‍යයි.
+  </div>
+
+  <p class="note">
+    වම් පැත්තේ Singlish ටයිප් කරන්න. දකුණු පැත්තේ
+    සිංහල ප්‍රතිඵලය ස්වයංක්‍රීයව පෙන්වයි.
+    අවශ්‍ය නම් සිංහල ප්‍රතිඵලය අතින් edit කළ හැකියි.
+  </p>
+
+</main>
+
+<script>
+const input = document.getElementById("input");
+const output = document.getElementById("output");
+const status = document.getElementById("status");
+
+let timer = null;
+let requestId = 0;
+
+async function convertText() {
+
+  const text = input.value;
+  const thisRequest = ++requestId;
+
+  if (!text.trim()) {
+    output.value = "";
+    status.textContent = "Singlish ටයිප් කරන්න.";
+    return;
+  }
+
+  status.textContent = "Converting...";
+
+  try {
+
+    const url =
+      "https://inputtools.google.com/request?text=" +
+      encodeURIComponent(text) +
+      "&itc=si-t-i0-und&num=5&cp=0&cs=1&ie=utf-8&oe=utf-8";
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Network error");
+    }
+
+    const data = await response.json();
+
+    if (thisRequest !== requestId) return;
+
+    if (data[0] !== "SUCCESS") {
+      throw new Error("Conversion failed");
+    }
+
+    const result = data[1]
+      .map(item => item[1]?.[0] || item[0])
+      .join("");
+
+    output.value = result;
+    status.textContent = "පරිවර්තනය සාර්ථකයි.";
+
+  } catch (error) {
+
+    if (thisRequest !== requestId) return;
+
+    status.textContent =
+      "පරිවර්තනය අසාර්ථකයි. Internet සම්බන්ධතාවය පරීක්ෂා කරන්න.";
+
+  }
+}
+
+// ටයිප් කිරීම නතර කළ පසු ස්වයංක්‍රීය පරිවර්තනය
+input.addEventListener("input", () => {
+  clearTimeout(timer);
+
+  timer = setTimeout(() => {
+    convertText();
+  }, 350);
+});
+
+// Convert බොත්තම
+document.getElementById("convertBtn")
+  .addEventListener("click", convertText);
+
+// Copy බොත්තම
+document.getElementById("copyBtn")
+  .addEventListener("click", async () => {
+
+    if (!output.value) {
+      status.textContent = "Copy කිරීමට සිංහල text එකක් නැහැ.";
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(output.value);
+      status.textContent = "සිංහල text එක Copy කළා!";
+    } catch (error) {
+      output.select();
+      status.textContent = "Text එක select කළා. Ctrl+C ඔබන්න.";
+    }
+  });
+
+// Clear බොත්තම
+document.getElementById("clearBtn")
+  .addEventListener("click", () => {
+
+    requestId++;
+    clearTimeout(timer);
+
+    input.value = "";
+    output.value = "";
+
+    status.textContent = "Clear කළා.";
+    input.focus();
+  });
+
+</script>
+
+</body>
+</html>
